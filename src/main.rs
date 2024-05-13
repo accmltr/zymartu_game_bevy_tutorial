@@ -1,38 +1,25 @@
+mod spaceship;
+mod movement;
+mod debug;
+mod camera;
+mod ambient_light;
+
 use bevy::prelude::*;
+use crate::ambient_light::AmbientLightPlugin;
+use crate::debug::DebugPlugin;
+use crate::movement::MovementPlugin;
+use crate::spaceship::SpaceshipPlugin;
+use crate::camera::CameraPlugin;
 
-#[derive(Component, Debug)]
-struct Position {
-    x: f64,
-    y: f64,
-}
-
-#[derive(Component, Debug)]
-struct Velocity {
-    x: f64,
-    y: f64,
-}
 
 fn main() {
     App::new()
-        .add_systems(Startup, spawn_spaceship)
-        .add_systems(Update, (update_position, print_position))
+        .add_plugins(AmbientLightPlugin)
         .add_plugins(DefaultPlugins)
+        .add_plugins(CameraPlugin)
+        .add_plugins(MovementPlugin)
+        .add_plugins(DebugPlugin)
+        .add_plugins(SpaceshipPlugin)
         .run();
 }
 
-fn spawn_spaceship(mut commands: Commands) {
-    commands.spawn((Position { x: 0.0, y: 0.0 }, Velocity { x: 1.0, y: 0.0 }));
-}
-
-fn update_position(mut query: Query<(&Velocity, &mut Position)>) {
-    for (velocity, mut position) in query.iter_mut() {
-        position.x += velocity.x;
-        position.y += velocity.y;
-    }
-}
-
-fn print_position(query: Query<(Entity, &Position)>) {
-    for (entity, position) in query.iter() {
-        info!("Entity {:?} is at position {:?}", entity, position);
-    }
-}
