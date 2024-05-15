@@ -3,13 +3,12 @@ use bevy::prelude::*;
 use crate::ambient_light::AmbientLightPlugin;
 use crate::app_user_input::AppUserInput;
 use crate::asset_loader::AssetLoaderPlugin;
-use crate::asteroids::AsteroidPlugin;
 use crate::camera::CameraPlugin;
 use crate::collision_detection::CollisionPlugin;
 use crate::debug::DebugPlugin;
 use crate::despawner::despawn_when_far;
 use crate::movement::MovementPlugin;
-use crate::spaceship::{SpaceshipMissile, SpaceshipPlugin};
+use crate::spaceship::SpaceshipPlugin;
 
 mod spaceship;
 mod movement;

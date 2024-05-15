@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use crate::spaceship::SpaceshipMissile;
 
 const DESPAWN_DISTANCE: f32 = 100.0;
 
