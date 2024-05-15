@@ -1,16 +1,23 @@
+use std::f32::consts::PI;
 use std::ops::Range;
 
 use bevy::prelude::*;
 use rand::Rng;
 
 use crate::asset_loader::SceneAssets;
+use crate::collision_detection::Collider;
+use crate::despawner::despawn_when_far;
 use crate::movement::{Acceleration, MovingObjectBundle, Velocity};
+use crate::spaceship::SpaceshipMissile;
 
 const VELOCITY_SCALAR: f32 = 5.0;
 const ACCELERATION_SCALAR: f32 = 1.0;
 const SPAWN_RANGE_X: Range<f32> = -25.0..25.0;
 const SPAWN_RANGE_Z: Range<f32> = 0.0..25.0;
 const SPAWN_TIME_SECONDS: f32 = 1.0;
+const ASTEROID_RADIUS: f32 = 3.0;
+const ASTEROID_RADIUS_RANDOM: f32 = 3.0;
+const ASTEROID_ROTATION_SPEED: f32 = 0.2 * PI;
 
 
 #[derive(Component, Debug)]
@@ -28,11 +35,13 @@ impl Plugin for AsteroidPlugin {
         app.insert_resource(SpawnTimer {
             timer: Timer::from_seconds(SPAWN_TIME_SECONDS, TimerMode::Repeating),
         });
-        app.add_systems(Update, spawn_asteroid);
+        app.add_systems(Update, asteroid_spawner);
+        app.add_systems(Update, rotate_asteroid);
+        app.add_systems(Update, handle_asteroid_collisions);
     }
 }
 
-fn spawn_asteroid(
+fn asteroid_spawner(
     mut commands: Commands,
     mut spawn_timer: ResMut<SpawnTimer>,
     time: Res<Time>,
@@ -70,7 +79,37 @@ fn spawn_asteroid(
                 transform: Transform::from_translation(translation),
                 ..default()
             },
+            collider: Collider::new(
+                ASTEROID_RADIUS + rng.gen_range(
+                    -ASTEROID_RADIUS_RANDOM..ASTEROID_RADIUS_RANDOM
+                )
+            ),
         },
         Asteroid,
     ));
+}
+
+fn rotate_asteroid(
+    mut query: Query<&mut Transform, With<Asteroid>>,
+    time: Res<Time>,
+) {
+    for mut transform in &mut query {
+        transform.rotate_local_z(ASTEROID_ROTATION_SPEED * time.delta_seconds());
+    }
+}
+
+fn handle_asteroid_collisions(
+    mut commands: Commands,
+    query_asteroids: Query<(Entity, &Collider), With<Asteroid>>,
+    query_missiles: Query<(Entity), With<SpaceshipMissile>>,
+) {
+    for (entity, collider) in &query_asteroids {
+        for missileEntity in &query_missiles {
+            if collider.new_collisions.contains(&missileEntity) {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+
+        // for &collided_entity in &collider.new_collisions {}
+    }
 }

@@ -1,18 +1,31 @@
-use bevy::input::InputPlugin;
-use bevy::input::keyboard::{Key, KeyboardInput};
+use std::f32::consts::PI;
+use std::time::Duration;
 use bevy::prelude::*;
 use crate::asset_loader::SceneAssets;
-
+use crate::collision_detection::Collider;
 use crate::movement::*;
 
 const STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.0, -20.0);
 const SPACESHIP_SPEED: f32 = 25.0;
 const SPACESHIP_ROTATION_SPEED: f32 = 2.5;
 const SPACESHIP_ROLL_SPEED: f32 = 2.5;
+const SPACESHIP_MISSILE_OFFSET: f32 = 8.0;
 const SPACESHIP_MISSILE_SPEED: f32 = 30.0;
+const SPACESHIP_RELOAD_TIME: f32 = 0.1;
 
 #[derive(Component, Debug)]
-pub struct Spaceship;
+pub struct Spaceship {
+    pub last_fire_time: Duration,
+}
+
+impl Spaceship {
+    pub fn new() -> Self {
+        Spaceship { last_fire_time: Duration::ZERO }
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct SpaceshipMissile;
 
 pub struct SpaceshipPlugin;
 
@@ -34,8 +47,9 @@ fn spawn_spaceship(mut commands: Commands, scene_assets: Res<SceneAssets>) {
                 transform: Transform::from_translation(STARTING_POSITION),
                 ..default()
             },
+            collider: Collider::new(7.0),
         },
-        Spaceship,
+        Spaceship::new(),
     ));
 }
 
@@ -76,23 +90,36 @@ fn spaceship_movement_controls(
 
 fn spaceship_weapon_controls(
     mut commands: Commands,
-    query: Query<&Transform, With<Spaceship>>,
+    mut query: Query<(&Transform, &mut Spaceship), With<Spaceship>>,
     scene_assets: Res<SceneAssets>,
+    time: Res<Time>,
     button_input: Res<ButtonInput<KeyCode>>,
 ) {
-    let transform = query.single();
+    let (transform, mut spaceship) = query.single_mut();
+
+    if time.elapsed() - spaceship.last_fire_time < Duration::from_secs_f32(SPACESHIP_RELOAD_TIME) {
+        return;
+    }
 
     if button_input.pressed(KeyCode::Space) {
-        commands.spawn(
+        let mut bullet_transform = Transform::from_translation(
+            transform.translation - transform.forward() * SPACESHIP_MISSILE_OFFSET
+        ).with_scale(Vec3::ONE * 7.0)
+            .looking_to(transform.forward().xyz(), Vec3::Z);
+        bullet_transform.rotate_local_x(PI / 2.0);
+        commands.spawn((
             MovingObjectBundle {
-                velocity: Velocity::new(Vec3::new(0.0, 0.0, SPACESHIP_MISSILE_SPEED)),
+                velocity: Velocity::new(-transform.forward() * SPACESHIP_MISSILE_SPEED),
                 acceleration: Acceleration::new(Vec3::ZERO),
                 model: SceneBundle {
                     scene: scene_assets.missiles.clone(),
-                    transform: transform.clone().with_scale(3.0f32 * Vec3::ONE),
+                    transform: bullet_transform,
                     ..default()
                 },
-            }
-        );
+                collider: Collider::new(1.0),
+            },
+            SpaceshipMissile
+        ));
+        spaceship.last_fire_time = time.elapsed();
     }
 }
