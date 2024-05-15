@@ -1,4 +1,6 @@
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
+use iyes_perf_ui::{PerfUiCompleteBundle, PerfUiPlugin};
 
 use crate::ambient_light::AmbientLightPlugin;
 use crate::app_user_input::AppUserInput;
@@ -35,5 +37,15 @@ fn main() {
         .add_plugins(SpaceshipPlugin)
         .add_plugins(AsteroidPlugin)
         .add_plugins(DespawnPlugin)
+        .add_plugins(FrameTimeDiagnosticsPlugin)
+        .add_plugins(PerfUiPlugin)
+        .add_systems(PostStartup, spawn_performance_ui)
         .run();
+}
+
+fn spawn_performance_ui(
+    mut commands: Commands
+) {
+    println!("Spawning performance UI");
+    commands.spawn(PerfUiCompleteBundle::default());
 }
