@@ -6,7 +6,7 @@ use rand::Rng;
 
 use crate::asset_loader::SceneAssets;
 use crate::collision_detection::Collider;
-use crate::despawner::despawn_when_far;
+use crate::despawner::Despawnable;
 use crate::movement::{Acceleration, MovingObjectBundle, Velocity};
 use crate::spaceship::SpaceshipMissile;
 
@@ -86,6 +86,7 @@ fn asteroid_spawner(
             ),
         },
         Asteroid,
+        Despawnable,
     ));
 }
 
@@ -101,15 +102,13 @@ fn rotate_asteroid(
 fn handle_asteroid_collisions(
     mut commands: Commands,
     query_asteroids: Query<(Entity, &Collider), With<Asteroid>>,
-    query_missiles: Query<(Entity), With<SpaceshipMissile>>,
+    query_missiles: Query<Entity, With<SpaceshipMissile>>,
 ) {
     for (entity, collider) in &query_asteroids {
-        for missileEntity in &query_missiles {
-            if collider.new_collisions.contains(&missileEntity) {
+        for missile_entity in &query_missiles {
+            if collider.new_collisions.contains(&missile_entity) {
                 commands.entity(entity).despawn_recursive();
             }
         }
-
-        // for &collided_entity in &collider.new_collisions {}
     }
 }

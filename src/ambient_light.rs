@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
+
 use bevy::app::App;
-use bevy::pbr::{CascadeShadowConfig, CascadeShadowConfigBuilder};
+use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 
 pub struct AmbientLightPlugin;

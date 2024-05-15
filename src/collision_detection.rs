@@ -28,7 +28,7 @@ impl Plugin for CollisionPlugin {
 
 fn collision_detection(mut query: Query<(Entity, &GlobalTransform, &mut Collider)>) {
     let mut new_data: HashMap<Entity, (Vec<Entity>, Vec<Entity>)> = HashMap::new();
-    for (entity_a, transform_a, mut collider_a) in &query {
+    for (entity_a, transform_a, collider_a) in &query {
         let mut colliding_entities = vec![];
         let mut new_colliding_entities = vec![];
         for (entity_b, transform_b, collider_b) in &query {

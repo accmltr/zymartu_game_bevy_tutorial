@@ -3,6 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use crate::asset_loader::SceneAssets;
 use crate::collision_detection::Collider;
+use crate::despawner::Despawnable;
 use crate::movement::*;
 
 const STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.0, -20.0);
@@ -118,7 +119,8 @@ fn spaceship_weapon_controls(
                 },
                 collider: Collider::new(1.0),
             },
-            SpaceshipMissile
+            SpaceshipMissile,
+            Despawnable,
         ));
         spaceship.last_fire_time = time.elapsed();
     }
