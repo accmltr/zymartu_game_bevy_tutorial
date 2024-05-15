@@ -3,10 +3,11 @@ use bevy::prelude::*;
 use crate::ambient_light::AmbientLightPlugin;
 use crate::app_user_input::AppUserInput;
 use crate::asset_loader::AssetLoaderPlugin;
+use crate::asteroids::AsteroidPlugin;
 use crate::camera::CameraPlugin;
 use crate::collision_detection::CollisionPlugin;
 use crate::debug::DebugPlugin;
-use crate::despawner::despawn_when_far;
+use crate::despawner::DespawnPlugin;
 use crate::movement::MovementPlugin;
 use crate::spaceship::SpaceshipPlugin;
 
@@ -32,15 +33,7 @@ fn main() {
         .add_plugins(MovementPlugin)
         .add_plugins(DebugPlugin)
         .add_plugins(SpaceshipPlugin)
-        // .add_plugins(AsteroidPlugin)
-        .add_systems(Update, despawn_when_far)
-        // .add_systems(Update, print_missiles)
+        .add_plugins(AsteroidPlugin)
+        .add_plugins(DespawnPlugin)
         .run();
 }
-
-// fn print_missiles(query: Query<Entity, With<SpaceshipMissile>>){
-//     println!("Missiles: ");
-//     for missile in &query {
-//         println!("{}",missile.index());
-//     }
-// }
