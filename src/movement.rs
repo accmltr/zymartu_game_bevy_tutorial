@@ -1,6 +1,7 @@
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
 use crate::collision_detection::Collider;
+use crate::schedule::InGameSystemSet;
 
 #[derive(Component, Debug)]
 pub struct Velocity {
@@ -17,7 +18,7 @@ pub struct MovingObjectBundle {
     pub velocity: Velocity,
     pub acceleration: Acceleration,
     pub model: SceneBundle,
-    pub collider: Collider
+    pub collider: Collider,
 }
 
 impl Velocity {
@@ -39,7 +40,8 @@ impl Plugin for MovementPlugin {
         app.add_systems(Update, (
             update_velocity,
             update_position
-        ));
+        ).chain()
+            .in_set(InGameSystemSet::EntityUpdates));
     }
 }
 

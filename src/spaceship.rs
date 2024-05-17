@@ -5,6 +5,7 @@ use crate::asset_loader::SceneAssets;
 use crate::collision_detection::Collider;
 use crate::despawner::Despawnable;
 use crate::movement::*;
+use crate::schedule::InGameSystemSet;
 
 const STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.0, -20.0);
 const SPACESHIP_SPEED: f32 = 25.0;
@@ -28,13 +29,22 @@ impl Spaceship {
 #[derive(Component, Debug)]
 pub struct SpaceshipMissile;
 
+#[derive(Component, Debug)]
+pub struct SpaceshipShield;
+
 pub struct SpaceshipPlugin;
 
 impl Plugin for SpaceshipPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_spaceship);
-        app.add_systems(Update, spaceship_movement_controls);
-        app.add_systems(Update, spaceship_weapon_controls);
+        app.add_systems(
+            Update,
+            (
+                spaceship_movement_controls,
+                spaceship_weapon_controls,
+                spaceship_shield_controls
+            ).chain().in_set(InGameSystemSet::UserInput),
+        );
     }
 }
 
@@ -59,7 +69,9 @@ fn spaceship_movement_controls(
     button_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (mut transform, mut velocity) = query.single_mut();
+    let Ok((mut transform, mut velocity)) = query.get_single_mut() else {
+        return;
+    };
     let mut rotation = 0.0f32;
     let mut roll = 0.0f32;
     let mut movement = 0.0f32;
@@ -123,5 +135,17 @@ fn spaceship_weapon_controls(
             Despawnable,
         ));
         spaceship.last_fire_time = time.elapsed();
+    }
+}
+
+fn spaceship_shield_controls(
+    mut commands: Commands,
+    button_input: Res<ButtonInput<KeyCode>>,
+    query: Query<Entity, With<Spaceship>>,
+) {
+    let Ok(entity) = query.get_single() else { return; };
+
+    if button_input.just_pressed(KeyCode::Tab) {
+        commands.entity(entity).insert(SpaceshipShield);
     }
 }

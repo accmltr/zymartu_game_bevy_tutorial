@@ -8,6 +8,7 @@ use crate::asset_loader::SceneAssets;
 use crate::collision_detection::Collider;
 use crate::despawner::Despawnable;
 use crate::movement::{Acceleration, MovingObjectBundle, Velocity};
+use crate::schedule::InGameSystemSet;
 use crate::spaceship::SpaceshipMissile;
 
 const VELOCITY_SCALAR: f32 = 5.0;
@@ -35,9 +36,20 @@ impl Plugin for AsteroidPlugin {
         app.insert_resource(SpawnTimer {
             timer: Timer::from_seconds(SPAWN_TIME_SECONDS, TimerMode::Repeating),
         });
-        app.add_systems(Update, asteroid_spawner);
-        app.add_systems(Update, rotate_asteroid);
-        app.add_systems(Update, handle_asteroid_collisions);
+        app.add_systems(
+            Update,
+            handle_asteroid_collisions
+                .in_set(InGameSystemSet::CollisionDetection),
+        );
+
+        app.add_systems(
+            Update,
+            (
+                asteroid_spawner,
+                rotate_asteroid,
+            ).chain()
+                .in_set(InGameSystemSet::EntityUpdates),
+        );
     }
 }
 
