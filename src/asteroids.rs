@@ -4,7 +4,7 @@ use std::ops::Range;
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::asset_loader::SceneAssets;
+use crate::asset_loader::{AudioAssets, SceneAssets};
 use crate::collision_damage::CollisionDamage;
 use crate::collision_detection::Collider;
 use crate::despawner::Despawnable;
@@ -26,6 +26,18 @@ const COLLISION_DAMAGE: f32 = 35.0;
 
 #[derive(Component, Debug)]
 pub struct Asteroid;
+
+impl Asteroid {
+    pub fn handle_death(
+        commands: &mut Commands,
+        audio_assets: &Res<AudioAssets>,
+    ) {
+        commands.spawn(AudioBundle {
+            source: audio_assets.asteroid_explosion.clone(),
+            ..default()
+        });
+    }
+}
 
 #[derive(Resource, Debug)]
 pub struct SpawnTimer {

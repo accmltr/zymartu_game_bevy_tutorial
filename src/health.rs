@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::asset_loader::AudioAssets;
+use crate::asteroids::Asteroid;
 use crate::schedule::InGameSystemSet;
 
 #[derive(Component, Debug)]
@@ -28,10 +30,12 @@ impl Plugin for HealthPlugin {
 
 fn check_health(
     mut commands: Commands,
-    query: Query<(Entity, &Health)>,
+    query: Query<(Entity, &Health), With<Asteroid>>,
+    audio_assets: Res<AudioAssets>,
 ) {
     for (entity, health) in query.iter() {
         if health.value <= 0f32 {
+            Asteroid::handle_death(&mut commands, &audio_assets);
             commands.entity(entity).despawn_recursive();
         }
     }
