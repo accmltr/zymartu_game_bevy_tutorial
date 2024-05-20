@@ -1,11 +1,16 @@
 use std::f32::consts::PI;
 use std::time::Duration;
+
 use bevy::prelude::*;
+
 use crate::asset_loader::SceneAssets;
+use crate::collision_damage::CollisionDamage;
 use crate::collision_detection::Collider;
 use crate::despawner::Despawnable;
+use crate::health::Health;
 use crate::movement::*;
 use crate::schedule::InGameSystemSet;
+use crate::state::GameState;
 
 const STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.0, -20.0);
 const SPACESHIP_SPEED: f32 = 25.0;
@@ -14,6 +19,10 @@ const SPACESHIP_ROLL_SPEED: f32 = 2.5;
 const SPACESHIP_MISSILE_OFFSET: f32 = 8.0;
 const SPACESHIP_MISSILE_SPEED: f32 = 30.0;
 const SPACESHIP_RELOAD_TIME: f32 = 0.1;
+const HEALTH: f32 = 180.0;
+const COLLISION_DAMAGE: f32 = 135.0;
+const MISSILE_HEALTH: f32 = 1.0;
+const MISSILE_COLLISION_DAMAGE: f32 = 30.0;
 
 #[derive(Component, Debug)]
 pub struct Spaceship {
@@ -36,15 +45,24 @@ pub struct SpaceshipPlugin;
 
 impl Plugin for SpaceshipPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostStartup, spawn_spaceship);
-        app.add_systems(
-            Update,
-            (
-                spaceship_movement_controls,
-                spaceship_weapon_controls,
-                spaceship_shield_controls
-            ).chain().in_set(InGameSystemSet::UserInput),
-        );
+        app
+            .add_systems(PostStartup, spawn_spaceship)
+            .add_systems(
+                OnEnter(GameState::GameOver),
+                spawn_spaceship,
+            )
+            .add_systems(
+                Update,
+                (
+                    spaceship_movement_controls,
+                    spaceship_weapon_controls,
+                    spaceship_shield_controls
+                ).chain().in_set(InGameSystemSet::UserInput),
+            )
+            .add_systems(
+                Update,
+                spaceship_destroyed.in_set(InGameSystemSet::EntityUpdates),
+            );
     }
 }
 
@@ -60,6 +78,8 @@ fn spawn_spaceship(mut commands: Commands, scene_assets: Res<SceneAssets>) {
             },
             collider: Collider::new(7.0),
         },
+        Health::new(HEALTH),
+        CollisionDamage::new(COLLISION_DAMAGE),
         Spaceship::new(),
     ));
 }
@@ -108,7 +128,8 @@ fn spaceship_weapon_controls(
     time: Res<Time>,
     button_input: Res<ButtonInput<KeyCode>>,
 ) {
-    let (transform, mut spaceship) = query.single_mut();
+    let Ok((transform, mut spaceship)) =
+        query.get_single_mut() else { return; };
 
     if time.elapsed() - spaceship.last_fire_time < Duration::from_secs_f32(SPACESHIP_RELOAD_TIME) {
         return;
@@ -131,6 +152,8 @@ fn spaceship_weapon_controls(
                 },
                 collider: Collider::new(1.0),
             },
+            Health::new(MISSILE_HEALTH),
+            CollisionDamage::new(MISSILE_COLLISION_DAMAGE),
             SpaceshipMissile,
             Despawnable,
         ));
@@ -147,5 +170,14 @@ fn spaceship_shield_controls(
 
     if button_input.just_pressed(KeyCode::Tab) {
         commands.entity(entity).insert(SpaceshipShield);
+    }
+}
+
+fn spaceship_destroyed(
+    mut next_state: ResMut<NextState<GameState>>,
+    query: Query<(), With<Spaceship>>,
+) {
+    if query.get_single().is_err() {
+        next_state.set(GameState::GameOver);
     }
 }

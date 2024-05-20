@@ -10,10 +10,11 @@ use crate::camera::CameraPlugin;
 use crate::collision_detection::CollisionPlugin;
 use crate::debug::DebugPlugin;
 use crate::despawner::DespawnPlugin;
+use crate::health::HealthPlugin;
 use crate::movement::MovementPlugin;
-use crate::schedule::InGameSystemSet;
+use crate::schedule::MySchedulePlugin;
 use crate::spaceship::SpaceshipPlugin;
-use crate::state::{GameState, StatePlugin};
+use crate::state::StatePlugin;
 
 mod spaceship;
 mod movement;
@@ -27,15 +28,20 @@ mod collision_detection;
 mod despawner;
 mod schedule;
 mod state;
+mod health;
+mod collision_damage;
+mod collision_event;
 
 fn main() {
     App::new()
+        .add_plugins(MySchedulePlugin)
         .add_plugins(AppUserInput)
         .add_plugins(AssetLoaderPlugin)
         .add_plugins(AmbientLightPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugins(CameraPlugin)
         .add_plugins(CollisionPlugin)
+        .add_plugins(HealthPlugin)
         .add_plugins(MovementPlugin)
         .add_plugins(DebugPlugin)
         .add_plugins(SpaceshipPlugin)
@@ -45,13 +51,6 @@ fn main() {
         .add_plugins(PerfUiPlugin)
         .add_plugins(StatePlugin)
         .add_systems(PostStartup, spawn_performance_ui)
-        .configure_sets(
-            Update,
-            TestSystemSets::Set1
-                .run_if(in_state(GameState::Paused))
-                .before(InGameSystemSet::UserInput)
-        )
-        .add_systems(Update, spam.in_set(TestSystemSets::Set1))
         .run();
 }
 
@@ -60,14 +59,4 @@ fn spawn_performance_ui(
 ) {
     println!("Spawning performance UI");
     commands.spawn(PerfUiCompleteBundle::default());
-}
-
-fn spam() {
-    println!("Paused");
-}
-
-#[derive(SystemSet, Debug, Hash, Eq, PartialEq, Clone)]
-enum TestSystemSets {
-    Set1,
-    Set2
 }

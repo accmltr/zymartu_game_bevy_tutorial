@@ -5,11 +5,12 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::asset_loader::SceneAssets;
+use crate::collision_damage::CollisionDamage;
 use crate::collision_detection::Collider;
 use crate::despawner::Despawnable;
+use crate::health::Health;
 use crate::movement::{Acceleration, MovingObjectBundle, Velocity};
 use crate::schedule::InGameSystemSet;
-use crate::spaceship::SpaceshipMissile;
 
 const VELOCITY_SCALAR: f32 = 5.0;
 const ACCELERATION_SCALAR: f32 = 1.0;
@@ -19,6 +20,8 @@ const SPAWN_TIME_SECONDS: f32 = 1.0;
 const ASTEROID_RADIUS: f32 = 3.0;
 const ASTEROID_RADIUS_RANDOM: f32 = 3.0;
 const ASTEROID_ROTATION_SPEED: f32 = 0.2 * PI;
+const HEALTH: f32 = 80.0;
+const COLLISION_DAMAGE: f32 = 35.0;
 
 
 #[derive(Component, Debug)]
@@ -36,11 +39,11 @@ impl Plugin for AsteroidPlugin {
         app.insert_resource(SpawnTimer {
             timer: Timer::from_seconds(SPAWN_TIME_SECONDS, TimerMode::Repeating),
         });
-        app.add_systems(
-            Update,
-            handle_asteroid_collisions
-                .in_set(InGameSystemSet::CollisionDetection),
-        );
+        // app.add_systems(
+        //     Update,
+        //     handle_asteroid_collisions
+        //         .in_set(InGameSystemSet::CollisionDetection),
+        // );
 
         app.add_systems(
             Update,
@@ -97,6 +100,8 @@ fn asteroid_spawner(
                 )
             ),
         },
+        Health::new(HEALTH),
+        CollisionDamage::new(COLLISION_DAMAGE),
         Asteroid,
         Despawnable,
     ));
@@ -111,16 +116,16 @@ fn rotate_asteroid(
     }
 }
 
-fn handle_asteroid_collisions(
-    mut commands: Commands,
-    query_asteroids: Query<(Entity, &Collider), With<Asteroid>>,
-    query_missiles: Query<Entity, With<SpaceshipMissile>>,
-) {
-    for (entity, collider) in &query_asteroids {
-        for missile_entity in &query_missiles {
-            if collider.new_collisions.contains(&missile_entity) {
-                commands.entity(entity).despawn_recursive();
-            }
-        }
-    }
-}
+// fn handle_asteroid_collisions(
+//     mut commands: Commands,
+//     query_asteroids: Query<(Entity, &Collider), With<Asteroid>>,
+//     query_missiles: Query<Entity, With<SpaceshipMissile>>,
+// ) {
+//     for (entity, collider) in &query_asteroids {
+//         for missile_entity in &query_missiles {
+//             if collider.new_collisions.contains(&missile_entity) {
+//                 commands.entity(entity).despawn_recursive();
+//             }
+//         }
+//     }
+// }
